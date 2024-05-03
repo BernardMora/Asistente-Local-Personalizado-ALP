@@ -1,27 +1,22 @@
 import os
-
-from groq import Groq
-
-api_key='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'
-import os
-os.environ['GROQ_API_KEY'] = api_key
-
-import asyncio
-from playwright.async_api import async_playwright
-
 import playwright
 import pytesseract
-from PIL import Image
-import asyncio
 from playwright.async_api import async_playwright
 from PIL import Image, ImageDraw
+from groq import Groq
 import asyncio
-from playwright.async_api import async_playwright
-
-
 import base64
-
 import json
+import nest_asyncio
+import re
+import speech_recognition as sr
+from langchain_core.runnables import chain as chain_decorator
+
+
+api_key='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'
+os.environ['GROQ_API_KEY'] = api_key
+
+
 
 prompt='''Imagine you are a robot browsing the web, just like humans. Now you need to complete a task. In each iteration,
 you will receive an Observation that includes a screenshot of a webpage and some texts. 
@@ -67,14 +62,9 @@ Action: {{One Action format you choose}}
 Then the User will provide:
 Observation: {{A labeled bounding boxes and contents given by User}}'''
 
-import os
-
-import nest_asyncio
 
 # This is just required for running async playwright in a Jupyter notebook
 nest_asyncio.apply()
-
-import re
 
 def parse_commands(text):
     # Define patterns for each command
@@ -149,11 +139,6 @@ def llama3_agent(q):
 
 parsed_commands = parse_commands('Action: {{Scroll WINDOW; down}}')
 parsed_commands
-
-import asyncio
-import base64
-
-from langchain_core.runnables import chain as chain_decorator
 
 # Some javascript we will run on each step
 # to take a screenshot of the page, select the
@@ -291,12 +276,6 @@ def get_prompt(text, question):
 
 p = get_prompt('Apple iPhone 15 128GB Green  ₹70,999', 'iphone  price')
 llama3_agent(p)
-
-import asyncio
-import re
-import os
-from playwright.async_api import async_playwright
-import speech_recognition as sr
 
 async def get_information1(page, query):
     # Construct the search URL
