@@ -7,7 +7,7 @@ from transcriber import Transcriber
 from llm import LLM
 from weather import Weather
 from tts import TTS
-from speech_assistant_tuto.templates.pc_command import PcCommand
+from pc_command import PcCommand
 
 #Cargar llaves del archivo .env
 load_dotenv()
@@ -61,3 +61,6 @@ def audio():
         final_response = "No tengo idea de lo que estás hablando, Ringa Tech"
         tts_file = TTS().process(final_response)
         return {"result": "ok", "text": final_response, "file": tts_file}
+    
+if __name__ == "__main__":
+    app.run(debug=True)
