@@ -394,14 +394,5 @@ async def main():
     else:
         print("No query recognized. Exiting.")
 
-asyncio.run(main())
-
-async def main2():
-    playwright = await async_playwright().start()
-    browser = await playwright.chromium.launch(headless=False)  # Launch Chromium browser
-    page = await browser.new_page()  # Open a new page
-    await page.goto('https://www.google.in')
-    await get_information1(page, 'iphone price on amazon')  # Pass the page object
-
 # Ejecutar el bucle de eventos de asyncio
-asyncio.run(main2())
+asyncio.run(main())
