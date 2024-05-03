@@ -29,6 +29,7 @@ def audio():
     #Utilizar el LLM para ver si llamar una funcion
     llm = LLM()
     function_name, args, message = llm.process_functions(text)
+    
     if function_name is not None:
         #Si se desea llamar una funcion de las que tenemos
         if function_name == "get_weather":

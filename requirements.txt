@@ -11,8 +11,9 @@ langchain_core
 pyaudio
 SpeechRecognition
 
+pytorch
+chocolate
 
-install whisper:
 - pytorch
 - chocolate
 - choco ffmpeg

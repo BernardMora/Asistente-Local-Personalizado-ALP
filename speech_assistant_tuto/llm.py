@@ -8,39 +8,8 @@ from groq import Groq
 #Uso el modelo 0613, pero puedes usar un poco de
 #prompt engineering si quieres usar otro modelo
 
-# Hola
-
-class LLM():
-    def __init__(self):
-        pass
-    
-    def process_functions(self, text):
-        client = Groq(
-            api_key=os.environ.get("GROQ_API_KEY"),
-        )
-
-        response = client.chat.completions.create(
-            model="llama3-70b-8192",
-            messages=[
-                    #Si no te gusta que te hable feo, cambia aqui su descripcion
-                    {"role": "system", "content": "Eres un asistente malhablado"},
-                    {"role": "user", "content": text},
-            ], functions=[
-                {
-                    "name": "get_weather",
-                    "description": "Obtener el clima actual",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "ubicacion": {
-                                "type": "string",
-                                "description": "La ubicación, debe ser una ciudad",
-                            }
-                        },
-                        "required": ["ubicacion"],
-                    },
-                },
-                {
+"""
+        {
                     "name": "send_email",
                     "description": "Enviar un correo",
                     "parameters": {
@@ -84,12 +53,44 @@ class LLM():
                         }
                     },
                 }
-            ],
-            function_call="auto",
+        """
+
+class LLM():
+    def __init__(self):
+        self.client = Groq(
+            api_key=os.environ.get("GROQ_API_KEY"),
         )
+    
+    def process_functions(self, text):
+        # User message describing the function call
+        user_message = {"role": "user", "content": text}
+
+        # Function message (optional)
+        function_message = None
+        if "weather" or "clima" in text.lower():  # Example check for specific function
+            function_message = {
+            "role": "function",
+            "name": "get_weather",
+            "content": json.dumps({"ubicacion": "San Francisco"}),  # Replace with user-provided location
+            }
+
+        messages = [
+            {"role": "system", "content": "Eres un asistente que me ayudará a realizar las tareas que necesite en mi PC, como enviar correos, abrir sitios web, etc."},
+            user_message,
+        ]
+
+        if function_message:
+            messages.append(function_message)
+
+        print("Messages are: ", messages)
+        response = self.client.chat.completions.create(
+            model="llama3-70b-8192", messages=messages
+        )
+        print("Response is: ", response)
         
-        message = response["choices"][0]["message"]
-        
+        message = response["choices"][0]["message"]["content"]
+        print("Message is: ", message)
+
         #Nuestro amigo GPT quiere llamar a alguna funcion?
         if message.get("function_call"):
             #Sip
@@ -106,8 +107,8 @@ class LLM():
     #respuesta, para obtener una respuesta en lenguaje natural (en caso que la
     #respuesta haya sido JSON por ejemplo
     def process_response(self, text, message, function_name, function_response):
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo-0613",
+        response = self.client.chat.completions.create(
+            model="llama3-70b-8192",
             messages=[
                 #Aqui tambien puedes cambiar como se comporta
                 {"role": "system", "content": "Eres un asistente malhablado"},
