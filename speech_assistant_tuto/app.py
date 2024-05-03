@@ -1,20 +1,23 @@
 import os
-import openai
-from dotenv import load_dotenv
 from flask import Flask, render_template, request
 import json
+import requests
+
 from transcriber import Transcriber
 from llm import LLM
 from weather import Weather
 from tts import TTS
 from pc_command import PcCommand
 
-#Cargar llaves del archivo .env
-load_dotenv()
-openai.api_key = os.getenv('OPENAI_API_KEY')
-elevenlabs_key = os.getenv('ELEVENLABS_API_KEY')
-
 app = Flask(__name__)
+
+llama3_endpoint = "http://localhost:11434/api/generate"
+
+def send_to_llama3(message, model):
+    """Send message to Llama3 for processing."""
+    data = {'message': message, 'model': model}
+    response = requests.post(llama3_endpoint, json=data)
+    return response.json()
 
 @app.route("/")
 def index():
@@ -22,44 +25,66 @@ def index():
 
 @app.route("/audio", methods=["POST"])
 def audio():
-    #Obtener audio grabado y transcribirlo
+    # Obtain audio recorded and transcribe it
     audio = request.files.get("audio")
     text = Transcriber().transcribe(audio)
-    
-    #Utilizar el LLM para ver si llamar una funcion
-    llm = LLM()
-    function_name, args, message = llm.process_functions(text)
+
+    # Send the transcribed text to Llama3 with the model name
+    llama3_response = send_to_llama3(text, "llama3")
+    print("Llama3 res", llama3_response)
+
+    if not llama3_response:
+        final_response = "No response received from Llama3"
+        tts_file = TTS().process(final_response)
+        return {"result": "error", "text": final_response, "file": tts_file}
+
+    # Process Llama3's response
+    function_name, args, message = llama3_response.get('function_name'), llama3_response.get('args'), llama3_response.get('message')
     
     if function_name is not None:
-        #Si se desea llamar una funcion de las que tenemos
+        # If a function needs to be called
         if function_name == "get_weather":
-            #Llamar a la funcion del clima
+            # Call the weather function
             function_response = Weather().get(args["ubicacion"])
             function_response = json.dumps(function_response)
-            print(f"Respuesta de la funcion: {function_response}")
+            print(f"Function response: {function_response}")
             
-            final_response = llm.process_response(text, message, function_name, function_response)
+            final_response = LLM().process_response(text, message, function_name, function_response)
             tts_file = TTS().process(final_response)
             return {"result": "ok", "text": final_response, "file": tts_file}
         
         elif function_name == "send_email":
-            #Llamar a la funcion para enviar un correo
-            final_response = "Tu que estas leyendo el codigo, implementame y envia correos muahaha"
+            # Call the function to send an email
+            final_response = "You're reading the code, implement me and send emails muahaha"
             tts_file = TTS().process(final_response)
             return {"result": "ok", "text": final_response, "file": tts_file}
         
         elif function_name == "open_chrome":
             PcCommand().open_chrome(args["website"])
-            final_response = "Listo, ya abrí chrome en el sitio " + args["website"]
+            final_response = "Done, I've opened chrome on the site " + args["website"]
             tts_file = TTS().process(final_response)
             return {"result": "ok", "text": final_response, "file": tts_file}
+                
+        elif function_name == "open_file":
+            # Check if the file exists
+            file_name = args["file_name"]
+            if os.path.exists(file_name):
+                # Open the file
+                TTS().open_file(file_name)
+                final_response = f"File '{file_name}' opened successfully!"
+            else:
+                final_response = f"File '{file_name}' does not exist."
+                
+            tts_file = TTS().process(final_response)
+            return {"result": "ok", "text": final_response, "file": tts_file}
+
         
         elif function_name == "dominate_human_race":
-            final_response = "No te creas. Suscríbete al canal!"
+            final_response = "Don't believe it. Subscribe to the channel!"
             tts_file = TTS().process(final_response)
             return {"result": "ok", "text": final_response, "file": tts_file}
     else:
-        final_response = "No tengo idea de lo que estás hablando, Ringa Tech"
+        final_response = "I have no idea what you're talking about, Ringa Tech"
         tts_file = TTS().process(final_response)
         return {"result": "ok", "text": final_response, "file": tts_file}
     

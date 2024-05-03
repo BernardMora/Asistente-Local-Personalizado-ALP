@@ -2,16 +2,16 @@ import os
 from dotenv import load_dotenv
 import requests
 
-#Texto a voz. Esta impl utiliza ElevenLabs
 class TTS():
     def __init__(self):
         load_dotenv()
         self.key = os.getenv('ELEVENLABS_API_KEY')
     
+    def open_file(self, file_path):
+        os.system(f'start {file_path}')  # Esto abre el archivo con el programa predeterminado en Windows
+
     def process(self, text):
         CHUNK_SIZE = 1024
-        #Utiliza la voz especifica de Bella
-        #Me robe este codigo de su pagina hoh
         url = "https://api.elevenlabs.io/v1/text-to-speech/EXAVITQu4vr4xnSDxMaL"
 
         headers = {
@@ -29,13 +29,13 @@ class TTS():
             }
         }
 
-        #Lo guarda en static/response.mp3 para que el sitio web
-        #pueda leerlo y reproducirlo en el explorador
+        # Guardar el archivo de audio generado en una ubicación temporal
         file_name = "response.mp3"
         response = requests.post(url, json=data, headers=headers)
-        with open("static/" + file_name, 'wb') as f:
+        with open(file_name, 'wb') as f:
             for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
                 if chunk:
                     f.write(chunk)
-                    
+        
+        # Devolver el nombre del archivo generado para su posterior manipulación
         return file_name
