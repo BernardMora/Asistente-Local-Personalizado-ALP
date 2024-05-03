@@ -7,7 +7,7 @@ from transcriber import Transcriber
 from llm import LLM
 from weather import Weather
 from tts import TTS
-from pc_command import PcCommand
+from speech_assistant_tuto.templates.pc_command import PcCommand
 
 #Cargar llaves del archivo .env
 load_dotenv()
