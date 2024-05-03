@@ -1,0 +1,5 @@
+asyncio
+groq
+pillow
+playwright
+pytesseract
