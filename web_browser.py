@@ -326,4 +326,5 @@ async def main():
     else:
         print("No query recognized. Exiting.")
 
+# Ejecutar el bucle de eventos de asyncio
 asyncio.run(main())

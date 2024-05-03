@@ -3,5 +3,17 @@ groq
 pillow
 playwright
 pytesseract
+nest_asyncio
+jsonpatch
+charset-normalizer
+langsmith
+langchain_core
 pyaudio
 SpeechRecognition
+
+
+install whisper:
+- pytorch
+- chocolate
+- choco ffmpeg
+- whisper
