@@ -8,3 +8,9 @@ jsonpatch
 charset-normalizer
 langsmith
 langchain_core
+openai
+transcriber
+llm
+weather
+tts
+pc_command

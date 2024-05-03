@@ -345,28 +345,10 @@ from playwright.async_api import async_playwright
 
 async def main():
     playwright = await async_playwright().start()
-    browser = await playwright.chromium.launch(headless=False)  # Launch Chromium browser
+    browser = await playwright.chromium.launch(channel="msedge", headless=False)  # Launch Chromium browser
     page = await browser.new_page()  # Open a new page
     await page.goto('https://www.google.in')
     await get_information1(page, 'tell me a good joke')  # Pass the page object
 
-async def main2():
-    playwright = await async_playwright().start()
-    browser = await playwright.chromium.launch(headless=False)  # Launch Chromium browser
-    page = await browser.new_page()  # Open a new page
-    await page.goto('https://www.google.in')
-    await get_information1(page, 'iphone price on amazon')  # Pass the page object
-
 # Ejecutar el bucle de eventos de asyncio
 asyncio.run(main())
-
-import platform
-async def main2():
-    playwright = await async_playwright().start()
-
-    browser = await playwright.chromium.launch(headless=False)  # Launch Chromium browser
-    page = await browser.new_page()  # Open a new page
-    await page.goto('https://www.google.in')
-    await get_information1('iphone price on amazon')
-
-asyncio.run(main2())
