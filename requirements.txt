@@ -14,3 +14,5 @@ llm
 weather
 tts
 pc_command
+pyaudio
+SpeechRecognition
