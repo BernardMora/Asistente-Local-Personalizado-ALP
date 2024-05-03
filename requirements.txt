@@ -3,3 +3,5 @@ groq
 pillow
 playwright
 pytesseract
+pyaudio
+SpeechRecognition

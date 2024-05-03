@@ -344,16 +344,62 @@ async def get_information1(page, query):  # Pass page as an argument
     return answer
     
 
-import asyncio
 import platform
+import asyncio
 from playwright.async_api import async_playwright
+import speech_recognition as sr
+
+async def get_information1(page, query):
+    # Interact with the page based on the query
+    if "joke" in query.lower():
+        # Example: if the query contains the word "joke", search for a joke
+        await page.goto('https://www.google.com/search?q=good+joke')
+        # You can further interact with the page to find and extract the joke
+    else:
+        print("Query does not contain 'joke'. No action taken.")
+
+async def recognize_speech():
+    # Initialize recognizer
+    recognizer = sr.Recognizer()
+
+    try:
+        # Use microphone as source
+        with sr.Microphone() as source:
+            print("Listening...")
+            recognizer.adjust_for_ambient_noise(source)
+            audio = recognizer.listen(source)
+
+        print("Recognizing...")
+        # Recognize speech using Google Speech Recognition
+        query = recognizer.recognize_google(audio)
+        print("You said:", query)
+        return query
+    except sr.UnknownValueError:
+        print("Could not understand audio")
+        return ""
+    except sr.RequestError as e:
+        print("Could not request results from Google Speech Recognition service; {0}".format(e))
+        return ""
+    except Exception as e:
+        print("An error occurred:", e)
+        return ""
 
 async def main():
     playwright = await async_playwright().start()
     browser = await playwright.chromium.launch(headless=False)  # Launch Chromium browser
     page = await browser.new_page()  # Open a new page
     await page.goto('https://www.google.in')
-    await get_information1(page, 'tell me a good joke')  # Pass the page object
+
+    # Use speech recognition to capture the user's query
+    query = await recognize_speech()
+
+    if query:
+        # Pass parameters to the function
+        await get_information1(page, query)
+    else:
+        print("No query recognized. Exiting.")
+
+asyncio.run(main())
 
 async def main2():
     playwright = await async_playwright().start()
@@ -363,15 +409,4 @@ async def main2():
     await get_information1(page, 'iphone price on amazon')  # Pass the page object
 
 # Ejecutar el bucle de eventos de asyncio
-asyncio.run(main())
-
-import platform
-async def main2():
-    playwright = await async_playwright().start()
-
-    browser = await playwright.chromium.launch(headless=False)  # Launch Chromium browser
-    page = await browser.new_page()  # Open a new page
-    await page.goto('https://www.google.in')
-    await get_information1('iphone price on amazon')
-
 asyncio.run(main2())
