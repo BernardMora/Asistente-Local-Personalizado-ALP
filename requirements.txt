@@ -8,3 +8,5 @@ jsonpatch
 charset-normalizer
 langsmith
 langchain_core
+pyaudio
+SpeechRecognition

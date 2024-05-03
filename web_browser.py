@@ -287,46 +287,33 @@ def get_prompt(text, question):
 p = get_prompt('Apple iPhone 15 128GB Green  ₹70,999', 'iphone  price')
 llama3_agent(p)
 
-async def get_information1(query):
-    
-
+async def get_information1(page, query):  # Pass page as an argument
     prev_image = ''
     answer = ''
     while True:
-        
-
-#         print(len(browser.contexts[0].pages))
-#         page = browser.contexts[0].pages[0]
         try:
             obj = await mark_page(page)
         except:
             await wait()
             continue
-#         if obj['img'] == prev_image:
-#             await page.goto('https://www.amazon.in/')
-#             continue
+
         obj = format_descriptions(obj)
     
         text = await page.inner_text('body')
         
         if 'google' not in page.url:
-        
             p = get_prompt(text, query)
             p = llama3_agent(p)
             if p != 'NO':
                 return p
 
-
         new_query =  prompt + "\n Valid Bounding boxes: " + obj['bbox_descriptions']  \
         + '\nQuestion:'+query
-        #print(new_query)
-        #print(new_query)
+
         resp = llama3_agent(new_query)
         
-        print("********************", resp)
+        parsed_commands = parse_commands(resp)[0]
         
-        parsed_commands =parse_commands(resp)[0]
-        print(parsed_commands)
         if 'Type' in parsed_commands:
             location = int(parsed_commands['Type'][0])
             await type_text(page, location, parsed_commands['Type'][1], obj)
@@ -335,48 +322,86 @@ async def get_information1(query):
             await click(page, obj, query, location)
         elif 'Bing' in parsed_commands:
             await page.goto('https://www.bing.com/')
-            
         elif 'Scroll' in parsed_commands:
             await scroll(page, obj, parsed_commands['Scroll'])
-            
         elif 'Wait' in parsed_commands:
             await wait()
         elif 'GoBack' in parsed_commands:
             await go_back(page)
         elif 'Google' in parsed_commands:
             await to_google(page)
-            
         elif 'ANSWER' in parsed_commands:
             answer = parsed_commands['ANSWER'][0]
             print(answer)
             break
         elif 'FINISHED' in parsed_commands:
             break
-    #await browser.close()
     return answer
     
 
-import asyncio
 import platform
+import asyncio
 from playwright.async_api import async_playwright
+import speech_recognition as sr
+
+async def get_information1(page, query):
+    # Interact with the page based on the query
+    if "joke" in query.lower():
+        # Example: if the query contains the word "joke", search for a joke
+        await page.goto('https://www.google.com/search?q=good+joke')
+        # You can further interact with the page to find and extract the joke
+    else:
+        print("Query does not contain 'joke'. No action taken.")
+
+async def recognize_speech():
+    # Initialize recognizer
+    recognizer = sr.Recognizer()
+
+    try:
+        # Use microphone as source
+        with sr.Microphone() as source:
+            print("Listening...")
+            recognizer.adjust_for_ambient_noise(source)
+            audio = recognizer.listen(source)
+
+        print("Recognizing...")
+        # Recognize speech using Google Speech Recognition
+        query = recognizer.recognize_google(audio)
+        print("You said:", query)
+        return query
+    except sr.UnknownValueError:
+        print("Could not understand audio")
+        return ""
+    except sr.RequestError as e:
+        print("Could not request results from Google Speech Recognition service; {0}".format(e))
+        return ""
+    except Exception as e:
+        print("An error occurred:", e)
+        return ""
 
 async def main():
     playwright = await async_playwright().start()
     browser = await playwright.chromium.launch(headless=False)  # Launch Chromium browser
     page = await browser.new_page()  # Open a new page
     await page.goto('https://www.google.in')
-    await get_information1('tell me a good joke')
 
-# Ejecutar el bucle de eventos de asyncio
+    # Use speech recognition to capture the user's query
+    query = await recognize_speech()
+
+    if query:
+        # Pass parameters to the function
+        await get_information1(page, query)
+    else:
+        print("No query recognized. Exiting.")
+
 asyncio.run(main())
 
-import platform
 async def main2():
     playwright = await async_playwright().start()
-
     browser = await playwright.chromium.launch(headless=False)  # Launch Chromium browser
     page = await browser.new_page()  # Open a new page
     await page.goto('https://www.google.in')
-    await get_information1('iphone price on amazon')
+    await get_information1(page, 'iphone price on amazon')  # Pass the page object
 
+# Ejecutar el bucle de eventos de asyncio
 asyncio.run(main2())
