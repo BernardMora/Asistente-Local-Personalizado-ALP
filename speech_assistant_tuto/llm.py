@@ -7,6 +7,9 @@ from groq import Groq
 #Y regresar una funcion a llamar con sus parametros
 #Uso el modelo 0613, pero puedes usar un poco de
 #prompt engineering si quieres usar otro modelo
+
+# Hola
+
 class LLM():
     def __init__(self):
         pass
