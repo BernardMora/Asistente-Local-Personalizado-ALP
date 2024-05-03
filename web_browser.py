@@ -1,22 +1,22 @@
 import os
-
+import playwright
+import pytesseract
+from playwright.async_api import async_playwright
+from PIL import Image, ImageDraw
 from groq import Groq
+import asyncio
+import base64
+import json
+import nest_asyncio
+import re
+import speech_recognition as sr
+from langchain_core.runnables import chain as chain_decorator
+
 
 api_key='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'
-import os
 os.environ['GROQ_API_KEY'] = api_key
 
 
-import playwright
-import pytesseract
-import asyncio
-from playwright.async_api import async_playwright
-from PIL import Image, ImageDraw
-
-
-import base64
-
-import json
 
 prompt='''Imagine you are a robot browsing the web, just like humans. Now you need to complete a task. In each iteration,
 you will receive an Observation that includes a screenshot of a webpage and some texts. 
@@ -62,14 +62,9 @@ Action: {{One Action format you choose}}
 Then the User will provide:
 Observation: {{A labeled bounding boxes and contents given by User}}'''
 
-import os
-
-import nest_asyncio
 
 # This is just required for running async playwright in a Jupyter notebook
 nest_asyncio.apply()
-
-import re
 
 def parse_commands(text):
     # Define patterns for each command
@@ -144,11 +139,6 @@ def llama3_agent(q):
 
 parsed_commands = parse_commands('Action: {{Scroll WINDOW; down}}')
 parsed_commands
-
-import asyncio
-import base64
-
-from langchain_core.runnables import chain as chain_decorator
 
 # Some javascript we will run on each step
 # to take a screenshot of the page, select the
@@ -287,71 +277,13 @@ def get_prompt(text, question):
 p = get_prompt('Apple iPhone 15 128GB Green  ₹70,999', 'iphone  price')
 llama3_agent(p)
 
-async def get_information1(page, query):  # Pass page as an argument
-    prev_image = ''
-    answer = ''
-    while True:
-        try:
-            obj = await mark_page(page)
-        except:
-            await wait()
-            continue
-
-        obj = format_descriptions(obj)
-    
-        text = await page.inner_text('body')
-        
-        if 'google' not in page.url:
-            p = get_prompt(text, query)
-            p = llama3_agent(p)
-            if p != 'NO':
-                return p
-
-        new_query =  prompt + "\n Valid Bounding boxes: " + obj['bbox_descriptions']  \
-        + '\nQuestion:'+query
-
-        resp = llama3_agent(new_query)
-        
-        parsed_commands = parse_commands(resp)[0]
-        
-        if 'Type' in parsed_commands:
-            location = int(parsed_commands['Type'][0])
-            await type_text(page, location, parsed_commands['Type'][1], obj)
-        elif 'Click' in parsed_commands:
-            location = int(parsed_commands['Click'][0])
-            await click(page, obj, query, location)
-        elif 'Bing' in parsed_commands:
-            await page.goto('https://www.bing.com/')
-        elif 'Scroll' in parsed_commands:
-            await scroll(page, obj, parsed_commands['Scroll'])
-        elif 'Wait' in parsed_commands:
-            await wait()
-        elif 'GoBack' in parsed_commands:
-            await go_back(page)
-        elif 'Google' in parsed_commands:
-            await to_google(page)
-        elif 'ANSWER' in parsed_commands:
-            answer = parsed_commands['ANSWER'][0]
-            print(answer)
-            break
-        elif 'FINISHED' in parsed_commands:
-            break
-    return answer
-    
-
-import platform
-import asyncio
-from playwright.async_api import async_playwright
-import speech_recognition as sr
-
 async def get_information1(page, query):
-    # Interact with the page based on the query
-    if "joke" in query.lower():
-        # Example: if the query contains the word "joke", search for a joke
-        await page.goto('https://www.google.com/search?q=good+joke')
-        # You can further interact with the page to find and extract the joke
-    else:
-        print("Query does not contain 'joke'. No action taken.")
+    # Construct the search URL
+    search_url = f"https://www.google.com/search?q={query.replace(' ', '+')}"
+    print(f"Constructed search URL: {search_url}")
+    # Navigate to the constructed URL
+    await page.goto(search_url)
+    # You can further interact with the page here to extract information
 
 async def recognize_speech():
     # Initialize recognizer
@@ -373,7 +305,7 @@ async def recognize_speech():
         print("Could not understand audio")
         return ""
     except sr.RequestError as e:
-        print("Could not request results from Google Speech Recognition service; {0}".format(e))
+        print(f"Could not request results from Google Speech Recognition service: {e}")
         return ""
     except Exception as e:
         print("An error occurred:", e)
