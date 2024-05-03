@@ -3,3 +3,8 @@ groq
 pillow
 playwright
 pytesseract
+nest_asyncio
+jsonpatch
+charset-normalizer
+langsmith
+langchain_core

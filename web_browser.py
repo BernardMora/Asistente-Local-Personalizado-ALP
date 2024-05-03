@@ -6,17 +6,12 @@ api_key='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'
 import os
 os.environ['GROQ_API_KEY'] = api_key
 
-import asyncio
-from playwright.async_api import async_playwright
 
 import playwright
 import pytesseract
-from PIL import Image
 import asyncio
 from playwright.async_api import async_playwright
 from PIL import Image, ImageDraw
-import asyncio
-from playwright.async_api import async_playwright
 
 
 import base64
