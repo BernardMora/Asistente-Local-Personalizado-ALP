@@ -1,4 +1,3 @@
-import openai
 import json
 import os
 from groq import Groq
@@ -7,53 +6,6 @@ from groq import Groq
 #Y regresar una funcion a llamar con sus parametros
 #Uso el modelo 0613, pero puedes usar un poco de
 #prompt engineering si quieres usar otro modelo
-
-"""
-        {
-                    "name": "send_email",
-                    "description": "Enviar un correo",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "recipient": {
-                                "type": "string",
-                                "description": "La dirección de correo que recibirá el correo electrónico",
-                            },
-                            "subject": {
-                                "type": "string",
-                                "description": "El asunto del correo",
-                            },
-                            "body": {
-                                "type": "string",
-                                "description": "El texto del cuerpo del correo",
-                            }
-                        },
-                        "required": [],
-                    },
-                },
-                {
-                    "name": "open_chrome",
-                    "description": "Abrir el explorador Chrome en un sitio específico",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "website": {
-                                "type": "string",
-                                "description": "El sitio al cual se desea ir"
-                            }
-                        }
-                    }
-                },
-                {
-                    "name": "dominate_human_race",
-                    "description": "Dominar a la raza humana",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                        }
-                    },
-                }
-        """
 
 class LLM():
     def __init__(self):
@@ -65,20 +17,36 @@ class LLM():
         # User message describing the function call
         user_message = {"role": "user", "content": text}
 
-        # Function message (optional)
-        function_message = None
-        if "weather" or "clima" in text.lower():  # Example check for specific function
-            function_message = {
-            "role": "function",
-            "name": "get_weather",
-            "content": json.dumps({"ubicacion": "San Francisco"}),  # Replace with user-provided location
-            }
-
         messages = [
-            {"role": "system", "content": "Eres un asistente que me ayudará a realizar las tareas que necesite en mi PC, como enviar correos, abrir sitios web, etc."},
+            {"role": "system", "content": "You are a local assistant who will help me achieve the tasks that I ask you to do. This means that you will be able to perform tasks such as sending emails, opening websites, and even controlling my computer. You will be able to do this by calling the functions that I have defined for you. You can ask me to do things like 'send an email', 'open a website', or 'control my computer'. I will provide you with the necessary information to complete these tasks. If I ask you to do something that you are not sure how to do, you can ask me for help. I will be happy to help you with any questions you may have."},
             user_message,
         ]
 
+        # Function message (optional)
+        function_message = None
+        function_name = None
+
+        # Check for weather function
+        if "tijuana" and ("weather" or "clima") in text.lower():
+            function_message = {
+            "role": "function",
+            "name": "get_weather",
+            "content": json.dumps({"ubicacion": "Tijuana, Baja California"}),
+            }
+            function_name = "get_weather"
+
+        # Check for open_chrome function with search term extraction
+        elif ("browser" or "chrome") in text.lower():
+            search_term = extract_search_term(text)
+            website = f"https://www.google.com/search?q={search_term}"
+            function_message = {
+            "role": "function",
+            "name": "open_chrome",
+            "content": json.dumps({"website": website}),
+            }
+            function_name = "open_chrome"
+
+        # Append the function message if identified
         if function_message:
             messages.append(function_message)
 
@@ -86,15 +54,12 @@ class LLM():
         response = self.client.chat.completions.create(
             model="llama3-70b-8192", messages=messages
         )
-        print("Response is: ", response)
         
-        message = response["choices"][0]["message"]["content"]
-        print("Message is: ", message)
+        print("Message is: ", response.choices[0].message)
+        message = response.choices[0].message.content
 
         #Nuestro amigo GPT quiere llamar a alguna funcion?
-        if message.get("function_call"):
-            #Sip
-            function_name = message["function_call"]["name"] #Que funcion?
+        if function_message:
             args = message.to_dict()['function_call']['arguments'] #Con que datos?
             print("Funcion a llamar: " + function_name)
             args = json.loads(args)
@@ -122,3 +87,28 @@ class LLM():
             ],
         )
         return response["choices"][0]["message"]["content"]
+    
+import re
+
+def extract_search_term(text):
+  """
+  Extracts the search term from the user's text using regular expressions.
+
+  Args:
+      text: The user's spoken text.
+
+  Returns:
+      The extracted search term, or an empty string if no search term is found.
+  """
+  # Define a regular expression pattern to match search terms.
+  # This pattern captures phrases like "search for", "look up", "find", etc. followed by one or more words.
+  pattern = r"(search for|look up|find|.*\squery|.*\sbrowse) (.*)"
+  match = re.search(pattern, text.lower())
+
+  if match:
+    # Extract the captured group (the search query)
+    search_term = match.group(2)
+    return search_term
+  else:
+    # No search term found
+    return ""

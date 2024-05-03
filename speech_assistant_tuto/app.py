@@ -1,5 +1,4 @@
 import os
-import openai
 from dotenv import load_dotenv
 from flask import Flask, render_template, request
 import json
@@ -11,7 +10,6 @@ from pc_command import PcCommand
 
 #Cargar llaves del archivo .env
 load_dotenv()
-openai.api_key = os.getenv('OPENAI_API_KEY')
 elevenlabs_key = os.getenv('ELEVENLABS_API_KEY')
 
 app = Flask(__name__)
@@ -29,7 +27,7 @@ def audio():
     #Utilizar el LLM para ver si llamar una funcion
     llm = LLM()
     function_name, args, message = llm.process_functions(text)
-    
+
     if function_name is not None:
         #Si se desea llamar una funcion de las que tenemos
         if function_name == "get_weather":
