@@ -49,7 +49,7 @@ function doPreview() {
     if (!blobs.length) {
         console.log("No hay blobios!");
     } else {
-        console.log("Tenemos blobios!");
+        console.log("Tenemos blobios!", blobs);
         const blob = new Blob(blobs);
 
         //Usar fetch para enviar el audio grabado a Pythonio
