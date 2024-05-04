@@ -8,6 +8,9 @@ from llm import LLM
 from weather import Weather
 from tts import TTS
 from pc_command import PcCommand
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 app = Flask(__name__)
 
