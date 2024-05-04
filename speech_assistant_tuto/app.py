@@ -1,9 +1,7 @@
 import os
-import openai
 from dotenv import load_dotenv
 from flask import Flask, render_template, request
 import json
-import requests
 
 from transcriber import Transcriber
 from llm import LLM
@@ -12,14 +10,6 @@ from tts import TTS
 from pc_command import PcCommand
 
 app = Flask(__name__)
-
-llama3_endpoint = "http://localhost:11434/api/generate"
-
-def send_to_llama3(message, model):
-    """Send message to Llama3 for processing."""
-    data = {'prompt': message, 'model': model, "stream": False}
-    response = requests.post(llama3_endpoint, json=data)
-    return response.json()
 
 @app.route("/")
 def index():
@@ -31,17 +21,9 @@ def audio():
     audio = request.files.get("audio")
     text = Transcriber().transcribe(audio)
 
-    # Send the transcribed text to Llama3 with the model name
-    llama3_response = send_to_llama3(text, "llama3")
-    print("Llama3 res", llama3_response)
-
-    if not llama3_response:
-        final_response = "No response received from Llama3"
-        tts_file = TTS().process(final_response)
-        return {"result": "error", "text": final_response, "file": tts_file}
-
-    # Process Llama3's response
-    function_name, args, message = llama3_response.get('function_name'), llama3_response.get('args'), llama3_response.get('message')
+    #Utilizar el LLM para ver si llamar una funcion
+    llm = LLM()
+    function_name, args, message = llm.process_functions(text)
 
     if function_name is not None:
         # If a function needs to be called
