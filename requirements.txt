@@ -18,3 +18,5 @@ chocolate
 - chocolate
 - choco ffmpeg
 - whisper
+
+pip install ollama -q
