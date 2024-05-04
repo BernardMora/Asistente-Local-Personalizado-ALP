@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from flask import Flask, render_template, request
 import json
-
+import webbrowser
 from transcriber import Transcriber
 from llm import LLM
 from weather import Weather
@@ -14,21 +14,20 @@ app = Flask(__name__)
 @app.route("/")
 def index():
     return render_template("recorder.html")
-
 @app.route("/audio", methods=["POST"])
 def audio():
-    # Obtain audio recorded and transcribe it
+    # Obtener audio grabado y transcribirlo
     audio = request.files.get("audio")
     text = Transcriber().transcribe(audio)
 
-    #Utilizar el LLM para ver si llamar una funcion
+    # Utilizar el LLM para ver si llamar una función
     llm = LLM()
     function_name, args, message = llm.process_functions(text)
 
     if function_name is not None:
-        # If a function needs to be called
+        # Si se necesita llamar a una función
         if function_name == "get_weather":
-            # Call the weather function
+            # Llama a la función de clima
             function_response = Weather().get(args["ubicacion"])
             function_response = json.dumps(function_response)
             print(f"Function response: {function_response}")
@@ -38,39 +37,52 @@ def audio():
             return {"result": "ok", "text": final_response, "file": tts_file}
         
         elif function_name == "send_email":
-            # Call the function to send an email
-            final_response = "You're reading the code, implement me and send emails muahaha"
+            # Llama a la función para enviar un correo electrónico
+            final_response = "Estás leyendo el código, ¡impleméntame y envía correos electrónicos muahaha"
             tts_file = TTS().process(final_response)
             return {"result": "ok", "text": final_response, "file": tts_file}
         
         elif function_name == "open_chrome":
             PcCommand().open_chrome(args["website"])
-            final_response = "Done, I've opened chrome on the site " + args["website"]
+            final_response = "Hecho, he abierto Google Chrome en el sitio " + args["website"]
             tts_file = TTS().process(final_response)
             return {"result": "ok", "text": final_response, "file": tts_file}
-                
-        elif function_name == "open_file":
-            # Check if the file exists
-            file_name = args["file_name"]
-            if os.path.exists(file_name):
-                # Open the file
-                TTS().open_file(file_name)
-                final_response = f"File '{file_name}' opened successfully!"
+                        
+        elif function_name == "open_browser":
+            if "browser_type" in args:
+                browser_type = args["browser_type"]
+                webbrowser.open_new(browser_type)
+                final_response = f"Hecho, he abierto el navegador {browser_type}"
             else:
-                final_response = f"File '{file_name}' does not exist."
-                
+                final_response = "No se proporcionó el tipo de navegador."
+            
             tts_file = TTS().process(final_response)
             return {"result": "ok", "text": final_response, "file": tts_file}
 
         
-        elif function_name == "dominate_human_race":
-            final_response = "Don't believe it. Subscribe to the channel!"
+        elif function_name == "open_file":
+            # Verifica si el archivo existe
+            file_name = args["file_name"]
+            if os.path.exists(file_name):
+                # Abre el archivo
+                TTS().open_file(file_name)
+                final_response = f"¡Archivo '{file_name}' abierto correctamente!"
+            else:
+                final_response = f"El archivo '{file_name}' no existe."
+                
             tts_file = TTS().process(final_response)
             return {"result": "ok", "text": final_response, "file": tts_file}
-    else:
-        final_response = "I have no idea what you're talking about, Ringa Tech"
-        tts_file = TTS().process(final_response)
-        return {"result": "ok", "text": final_response, "file": tts_file}
+
+        elif function_name == "dominate_human_race":
+            final_response = "No lo creas. ¡Suscríbete al canal!"
+            tts_file = TTS().process(final_response)
+            return {"result": "ok", "text": final_response, "file": tts_file}
+    
+    # Si no se reconoce la función
+    final_response = "No tengo idea de lo que estás hablando, Ringa Tech"
+    tts_file = TTS().process(final_response)
+    return {"result": "ok", "text": final_response, "file": tts_file}
+
     
 if __name__ == "__main__":
     app.run(debug=True)
