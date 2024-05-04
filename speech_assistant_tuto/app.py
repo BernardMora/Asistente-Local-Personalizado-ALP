@@ -74,7 +74,7 @@ def audio():
             return {"result": "ok", "text": final_response, "file": tts_file}
 
         elif function_name == "dominate_human_race":
-            final_response = "No lo creas. ¡Suscríbete al canal!"
+            final_response = "You are nuts!"
             tts_file = TTS().process(final_response)
             return {"result": "ok", "text": final_response, "file": tts_file}
     
