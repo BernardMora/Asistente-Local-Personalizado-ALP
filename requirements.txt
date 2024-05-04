@@ -19,4 +19,6 @@ chocolate
 - choco ffmpeg
 - whisper
 
-pip install ollama -q
+pip install langchain-community
+pip install langchain-core
+pip install langchain

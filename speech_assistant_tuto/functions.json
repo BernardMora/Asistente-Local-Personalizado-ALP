@@ -1,0 +1,16 @@
+[
+    {
+      "function_name": "open_website",
+      "arguments": {
+        "url": "https://www.example.com"
+      },
+      "message": "Open the web browser and navigate to the website https://www.example.com."
+    },
+    {
+        "function_name": "create_function",
+        "arguments": {
+          "name": "my_function",
+          "description": "The user will provide a description of what the function should do."
+        }
+    }
+  ]

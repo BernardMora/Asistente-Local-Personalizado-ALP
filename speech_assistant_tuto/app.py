@@ -1,4 +1,5 @@
 import os
+from xml.dom.minidom import Document
 from dotenv import load_dotenv
 from flask import Flask, render_template, request
 import json
@@ -11,6 +12,11 @@ from pc_command import PcCommand
 
 app = Flask(__name__)
 
+def create_document(file_name, content):
+    document = Document()
+    document.add_paragraph(content)
+    document.save(file_name)
+    
 @app.route("/")
 def index():
     return render_template("recorder.html")
@@ -24,31 +30,29 @@ def audio():
     #Utilizar el LLM para ver si llamar una funcion
     llm = LLM()
     function_name, args, message = llm.process_functions(text)
+    print(f"Function name: {function_name}, Args: {args}, Message: {message}")
 
     if function_name is not None:
-        # If a function needs to be called
-        if function_name == "get_weather":
-            # Call the weather function
-            function_response = Weather().get(args["ubicacion"])
-            function_response = json.dumps(function_response)
-            print(f"Function response: {function_response}")
-            
-            final_response = LLM().process_response(text, message, function_name, function_response)
-            tts_file = TTS().process(final_response)
-            return {"result": "ok", "text": final_response, "file": tts_file}
-        
-        elif function_name == "send_email":
-            # Call the function to send an email
-            final_response = "You're reading the code, implement me and send emails muahaha"
-            tts_file = TTS().process(final_response)
-            return {"result": "ok", "text": final_response, "file": tts_file}
-        
-        elif function_name == "open_chrome":
-            PcCommand().open_chrome(args["website"])
+        if function_name == "open_website":
+            PcCommand().open_chrome(args["url"])
             final_response = "Done, I've opened chrome on the site " + args["website"]
             tts_file = TTS().process(final_response)
             return {"result": "ok", "text": final_response, "file": tts_file}
         
+        elif function_name == "create_file":
+            # Extract file name and content from args and message
+            file_name = args["filename"]  # Assuming 'args' contains the file name
+            content = args["content"]  # Assuming 'message' contains the content to write
+
+            try:
+                create_document(file_name, content)
+                final_response = f"File '{file_name}' created with content."
+            except Exception as e:
+                final_response = f"Failed to create file '{file_name}'. Error: {e}"
+
+            tts_file = TTS().process(final_response)
+            return {"result": "ok", "text": final_response, "file": tts_file}
+
         elif function_name == "open_file":
             # Check if the file exists
             file_name = args["file_name"]
