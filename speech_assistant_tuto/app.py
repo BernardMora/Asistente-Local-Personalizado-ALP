@@ -48,6 +48,7 @@ def audio():
             return {"result": "ok", "text": final_response, "file": tts_file}
         
         elif function_name == "create_file":
+            print("Enters the function")
             # Extract file name and content from args and message
             file_name = args["filename"]  # Assuming 'args' contains the file name
             content = args["content"]  # Assuming 'message' contains the content to write
@@ -77,24 +78,40 @@ def audio():
             return {"result": "ok", "text": final_response, "file": tts_file}
 
         elif function_name == "open_file":
-            # Verifica si el archivo existe
-            file_name = args["file_name"]
-            if os.path.exists(file_name):
-                # Abre el archivo
-                TTS().open_file(file_name)
-                final_response = f"¡Archivo '{file_name}' abierto correctamente!"
-            else:
-                final_response = f"El archivo '{file_name}' no existe."
-                
+            file_name = args.get("file_name")  # Assuming 'args' contains the file name
+            new_content = message  # Assuming 'message' contains the new content to append
+
+            transcriptions_dir = "transcriptions"
+            if not os.path.exists(transcriptions_dir):
+                os.makedirs(transcriptions_dir)
+
+            file_path = os.path.join(transcriptions_dir, f"{file_name}.txt")
+
+            # Append new content to the file
+            edit_document_response = edit_document(file_path, new_content)
+
+            final_response = edit_document_response
             tts_file = TTS().process(final_response)
             return {"result": "ok", "text": final_response, "file": tts_file}
 
+        elif function_name == "create_file":
+            # Assuming 'args' is a dictionary containing 'file_name' and 'message' contains the content to write
+            file_name = args["file_name"]  
+            content = args["content"]
+
+            create_document_response = create_document(file_name, content)
+
+            final_response = create_document_response
+            tts_file = TTS().process(final_response)
+            return {"result": "ok", "text": final_response, "file": tts_file}
+        
         elif function_name == "open_project":
             # Open postgreSQL
             ProjectInstruction().execute()
             # Open a vscode window with the project
             tts_file = TTS().process(final_response)
             return {"result": "ok", "text": "Opening IronWine project", "file": tts_file}
+    
     
     # Si no se reconoce la función
     final_response = "No tengo idea de lo que estás hablando, Ringa Tech"
@@ -104,3 +121,32 @@ def audio():
     
 if __name__ == "__main__":
     app.run(debug=True)
+
+def create_document(file_name, content):
+    transcriptions_dir = "transcriptions"
+    if not os.path.exists(transcriptions_dir):
+        os.makedirs(transcriptions_dir)
+
+    file_path = os.path.join(transcriptions_dir, f"{file_name}.txt")
+
+    try:
+        with open(file_path, 'w') as file:
+            file.write(content)
+        return f"File '{file_path}' created with content."
+    except Exception as e:
+        return f"Failed to create file '{file_path}'. Error: {e}"
+
+
+def edit_document(file_path, new_content):
+    # Check if the file exists at the specified path
+    if os.path.exists(file_path):
+        try:
+            # Open the file to append content
+            with open(file_path, 'a') as file:
+                file.write(new_content + "\n")
+            return f"Document {file_path} updated successfully."
+        except Exception as e:
+            return f"An error occurred while writing to {file_path}: {e}"
+    else:
+        # Handle the case where the file does not exist
+        return f"Error: The file {file_path} does not exist."
