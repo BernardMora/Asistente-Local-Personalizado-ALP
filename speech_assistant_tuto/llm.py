@@ -2,11 +2,11 @@ import json
 import os
 import requests
 from tts import TTS
-import ollama
 from langchain_community.llms import Ollama
 from langchain_core.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.output_parsers import StructuredOutputParser, ResponseSchema
+import re
 
 #Clase para utilizar cualquier LLM para procesar un texto
 #Y regresar una funcion a llamar con sus parametros
@@ -18,13 +18,6 @@ class LLM():
         self.llm = Ollama(model="llama3")
         self.model = "llama3"
 
-# "context": self.context
-    def send_to_model(self, messages):
-        """Send message to Llama3 for processing."""
-        data = {'model': self.model, 'messages': messages, "stream": False}
-        response = requests.post(self.endpoint, json=data)
-        return response.json()
-    
     def process_functions(self, text):
         print("Texto: ", text)
 
@@ -69,37 +62,8 @@ class LLM():
         arguments = output_dict["arguments"]
         message = output_dict["message"]
 
-        # Do something to interpret the user petition and translate it to a function call
-        
-        # Append the function message if identified
-        if output_dict:
-            messages.append(message)
-
-        
         return function_name, arguments, message
     
-    #Una vez que llamamos a la funcion (e.g. obtener clima, encender luz, etc)
-    #Podemos llamar a esta funcion con el msj original, la funcion llamada y su
-    #respuesta, para obtener una respuesta en lenguaje natural (en caso que la
-    #respuesta haya sido JSON por ejemplo
-    def process_response(self, text, message, function_name, function_response):
-        response = self.client.chat.completions.create(
-            model="llama3-70b-8192",
-            messages=[
-                #Aqui tambien puedes cambiar como se comporta
-                {"role": "system", "content": "Eres un asistente malhablado"},
-                {"role": "user", "content": text},
-                message,
-                {
-                    "role": "function",
-                    "name": function_name,
-                    "content": function_response,
-                },
-            ],
-        )
-        return response["choices"][0]["message"]["content"]
-    
-import re
 
 def extract_search_term(text):
   """

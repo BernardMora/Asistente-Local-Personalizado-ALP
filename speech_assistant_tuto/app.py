@@ -48,7 +48,7 @@ def audio():
             final_response = "Done, I've opened chrome on the site " + args["website"]
             tts_file = TTS().process(final_response)
             return {"result": "ok", "text": final_response, "file": tts_file}
-                
+        
         elif function_name == "open_file":
             # Check if the file exists
             file_name = args["file_name"]
